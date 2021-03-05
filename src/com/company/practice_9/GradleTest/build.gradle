@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'Main'
+    }
+
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+
+    finalizedBy{
+        copyJarToRoot
+    }
+
+}
+
+task copyJarToRoot(type: Copy){
+    from jar
+    into ('dockerBuild')
+    finalizedBy{
+        createDocker
+    }
+}
+
+task createDocker(type: Exec){
+    workingDir 'dockerBuild'
+    commandLine "docker", "build", "-t", "gradletest:1.0", "."
+    finalizedBy{
+        runDocker
+    }
+}
+
+task runDocker(type: Exec){
+    commandLine "docker", "run", "gradletest:1.0"
+}
